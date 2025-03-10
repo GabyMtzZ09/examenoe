@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Interactivo - Orientación Educativa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background: #00A86B;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            color: #333;
+            max-width: 800px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            color: #FFD700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .question {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            background: #FFD700;
+            color: #333;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s ease;
+        }
+        .options button:hover {
+            background: #FFAA00;
+            transform: scale(1.08);
+        }
+        .feedback {
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #005f73;
+        }
+        .timer, .score {
+            font-size: 22px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Examen Interactivo</h1>
+        <div class="timer">⏳ Tiempo: <span id="time">60</span> segundos</div>
+        <div class="score">✅ Aciertos: <span id="correct">0</span> | ❌ Errores: <span id="wrong">0</span></div>
+        <div class="icon" id="icono"></div>
+        <div class="question" id="question">Cargando pregunta...</div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        const questions = [
+            { question: "¿Cuál es el principal rol de un orientador educativo?", options: ["Enseñar matemáticas", "Brindar apoyo emocional y académico", "Administrar la escuela", "Revisar tareas"], answer: 1, explanation: "El orientador educativo apoya a los estudiantes en su desarrollo académico y emocional.", icon: "fa-user-graduate" },
+            { question: "¿Qué herramienta es útil para evaluar las necesidades de un estudiante?", options: ["Entrevistas", "Redes sociales", "Juegos de azar", "Publicidad"], answer: 0, explanation: "Las entrevistas permiten conocer las necesidades individuales de los estudiantes.", icon: "fa-comments" }
+        ];
+        
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+        let timeLeft = 60;
+        
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                document.querySelector('.container').innerHTML = `<h2>🎉 Examen terminado</h2><p>✅ Aciertos: ${correctAnswers}</p><p>❌ Errores: ${wrongAnswers}</p>`;
+                return;
+            }
+            const q = questions[currentQuestion];
+            document.getElementById('question').textContent = q.question;
+            document.getElementById('icono').innerHTML = `<i class="fas ${q.icon}"></i>`;
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            q.options.forEach((opt, index) => {
+                const button = document.createElement('button');
+                button.textContent = opt;
+                button.onclick = () => checkAnswer(index);
+                optionsDiv.appendChild(button);
+            });
+            document.getElementById('feedback').textContent = '';
+        }
+        
+        function checkAnswer(selected) {
+            const q = questions[currentQuestion];
+            if (selected === q.answer) {
+                correctAnswers++;
+                document.getElementById('feedback').textContent = "🎉 ¡Correcto! " + q.explanation;
+            } else {
+                wrongAnswers++;
+                document.getElementById('feedback').textContent = "❌ Incorrecto. La respuesta correcta es: " + q.options[q.answer];
+            }
+            document.getElementById('correct').textContent = correctAnswers;
+            document.getElementById('wrong').textContent = wrongAnswers;
+            currentQuestion++;
+            setTimeout(loadQuestion, 2000);
+        }
+        
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    document.querySelector('.container').innerHTML = `<h2>⏳ Tiempo agotado</h2><p>✅ Aciertos: ${correctAnswers}</p><p>❌ Errores: ${wrongAnswers}</p>`;
+                    return;
+                }
+                document.getElementById('time').textContent = timeLeft;
+                timeLeft--;
+            }, 1000);
+        }
+        
+        loadQuestion();
+        startTimer();
+    </script>
+</body>
+</html>
