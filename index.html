@@ -8,6 +8,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDDxWh8p_yauwGWMT2w5v6rGmkvHMqtGXk",
@@ -22,11 +23,14 @@
         const db = getFirestore(app);
         
         window.saveResults = async function(name, correctAnswers, wrongAnswers) {
+            const totalQuestions = correctAnswers + wrongAnswers;
+            const score = Math.round((correctAnswers / totalQuestions) * 100);
             try {
                 await addDoc(collection(db, "resultados"), {
                     nombre: name,
                     aciertos: correctAnswers,
                     errores: wrongAnswers,
+                    calificacion: score,
                     fecha: new Date().toISOString()
                 });
                 alert("Resultados guardados correctamente.");
@@ -37,12 +41,26 @@
 
         window.loadResults = async function() {
             const resultsTable = document.getElementById("results-table");
-            resultsTable.innerHTML = "<tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Fecha</th></tr>";
+            resultsTable.innerHTML = "<tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Calificación</th><th>Fecha</th></tr>";
             const querySnapshot = await getDocs(collection(db, "resultados"));
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                resultsTable.innerHTML += `<tr><td>${data.nombre}</td><td>${data.aciertos}</td><td>${data.errores}</td><td>${new Date(data.fecha).toLocaleString()}</td></tr>`;
+                resultsTable.innerHTML += `<tr><td>${data.nombre}</td><td>${data.aciertos}</td><td>${data.errores}</td><td>${data.calificacion}</td><td>${new Date(data.fecha).toLocaleString()}</td></tr>`;
             });
+        };
+
+        window.downloadPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Resultados del Examen", 10, 10);
+            let rows = [];
+            document.querySelectorAll("#results-table tr").forEach((row, index) => {
+                let rowData = [];
+                row.querySelectorAll("td, th").forEach((cell) => rowData.push(cell.innerText));
+                rows.push(rowData);
+            });
+            doc.autoTable({ head: [rows[0]], body: rows.slice(1) });
+            doc.save("resultados_examen.pdf");
         };
     </script>
     <style>
@@ -81,14 +99,24 @@
             padding: 10px;
             text-align: left;
         }
+        button {
+            background-color: #FFD700;
+            color: black;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Resultados del Examen</h1>
         <button onclick="loadResults()">Cargar Resultados</button>
+        <button onclick="downloadPDF()">Descargar PDF</button>
         <table id="results-table">
-            <tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Fecha</th></tr>
+            <tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Calificación</th><th>Fecha</th></tr>
         </table>
     </div>
 </body>
