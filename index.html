@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDDxWh8p_yauwGWMT2w5v6rGmkvHMqtGXk",
@@ -34,6 +34,16 @@
                 console.error("Error al guardar: ", e);
             }
         };
+
+        window.loadResults = async function() {
+            const resultsTable = document.getElementById("results-table");
+            resultsTable.innerHTML = "<tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Fecha</th></tr>";
+            const querySnapshot = await getDocs(collection(db, "resultados"));
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                resultsTable.innerHTML += `<tr><td>${data.nombre}</td><td>${data.aciertos}</td><td>${data.errores}</td><td>${new Date(data.fecha).toLocaleString()}</td></tr>`;
+            });
+        };
     </script>
     <style>
         body {
@@ -59,116 +69,27 @@
             text-transform: uppercase;
             margin-bottom: 15px;
         }
-        .form-container {
-            margin-bottom: 20px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-        .form-container input {
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
             padding: 10px;
-            width: 80%;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-        .form-container button {
-            padding: 10px 20px;
-            font-size: 18px;
-            background: #FFD700;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .form-container button:hover {
-            background: #FFAA00;
+            text-align: left;
         }
     </style>
 </head>
 <body>
-    <div class="container" id="form-container">
-        <h1>🚀 Examen Interactivo</h1>
-        <div class="form-container">
-            <input type="text" id="student-name" placeholder="Ingresa tu nombre">
-            <button onclick="startExam()">Comenzar Examen</button>
-        </div>
+    <div class="container">
+        <h1>📊 Resultados del Examen</h1>
+        <button onclick="loadResults()">Cargar Resultados</button>
+        <table id="results-table">
+            <tr><th>Nombre</th><th>Aciertos</th><th>Errores</th><th>Fecha</th></tr>
+        </table>
     </div>
-    <div class="container" id="exam-container" style="display: none;">
-        <div class="timer">⏳ Tiempo: <span id="time">60</span> segundos</div>
-        <div class="score">✅ Aciertos: <span id="correct">0</span> | ❌ Errores: <span id="wrong">0</span></div>
-        <div class="icon" id="icono"></div>
-        <div class="question" id="question">Cargando pregunta...</div>
-        <div class="options" id="options"></div>
-        <div class="feedback" id="feedback"></div>
-    </div>
-
-    <script>
-        let studentName = "";
-        const questions = [
-            { question: "¿Cuál es el principal rol de un orientador educativo?", options: ["Enseñar matemáticas", "Brindar apoyo emocional y académico", "Administrar la escuela", "Revisar tareas"], answer: 1, explanation: "El orientador educativo apoya a los estudiantes en su desarrollo académico y emocional.", icon: "fa-user-graduate" },
-            { question: "¿Qué herramienta es útil para evaluar las necesidades de un estudiante?", options: ["Entrevistas", "Redes sociales", "Juegos de azar", "Publicidad"], answer: 0, explanation: "Las entrevistas permiten conocer las necesidades individuales de los estudiantes.", icon: "fa-comments" }
-        ];
-        
-        let currentQuestion = 0;
-        let correctAnswers = 0;
-        let wrongAnswers = 0;
-        let timeLeft = 60;
-        
-        function startExam() {
-            studentName = document.getElementById("student-name").value;
-            if (!studentName) {
-                alert("Por favor ingresa tu nombre.");
-                return;
-            }
-            document.getElementById("form-container").style.display = "none";
-            document.getElementById("exam-container").style.display = "block";
-            loadQuestion();
-            startTimer();
-        }
-        
-        function loadQuestion() {
-            if (currentQuestion >= questions.length) {
-                document.querySelector('#exam-container').innerHTML = `<h2>🎉 Examen terminado</h2><p>✅ Aciertos: ${correctAnswers}</p><p>❌ Errores: ${wrongAnswers}</p>`;
-                saveResults(studentName, correctAnswers, wrongAnswers);
-                return;
-            }
-            const q = questions[currentQuestion];
-            document.getElementById('question').textContent = q.question;
-            document.getElementById('icono').innerHTML = `<i class="fas ${q.icon}"></i>`;
-            const optionsDiv = document.getElementById('options');
-            optionsDiv.innerHTML = '';
-            q.options.forEach((opt, index) => {
-                const button = document.createElement('button');
-                button.textContent = opt;
-                button.onclick = () => checkAnswer(index);
-                optionsDiv.appendChild(button);
-            });
-            document.getElementById('feedback').textContent = '';
-        }
-        
-        function checkAnswer(selected) {
-            const q = questions[currentQuestion];
-            if (selected === q.answer) {
-                correctAnswers++;
-                document.getElementById('feedback').textContent = "🎉 ¡Correcto! " + q.explanation;
-            } else {
-                wrongAnswers++;
-                document.getElementById('feedback').textContent = "❌ Incorrecto. La respuesta correcta es: " + q.options[q.answer];
-            }
-            document.getElementById('correct').textContent = correctAnswers;
-            document.getElementById('wrong').textContent = wrongAnswers;
-            currentQuestion++;
-            setTimeout(loadQuestion, 2000);
-        }
-        
-        function startTimer() {
-            const timerInterval = setInterval(() => {
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    document.querySelector('#exam-container').innerHTML = `<h2>⏳ Tiempo agotado</h2>`;
-                    saveResults(studentName, correctAnswers, wrongAnswers);
-                    return;
-                }
-                document.getElementById('time').textContent = timeLeft;
-                timeLeft--;
-            }, 1000);
-        }
-    </script>
 </body>
 </html>
