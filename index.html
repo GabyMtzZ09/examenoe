@@ -8,7 +8,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        import * as jspdf from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        import "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDDxWh8p_yauwGWMT2w5v6rGmkvHMqtGXk",
@@ -34,6 +35,7 @@
                     fecha: new Date().toISOString()
                 });
                 alert("Resultados guardados correctamente.");
+                loadResults();
             } catch (e) {
                 console.error("Error al guardar: ", e);
             }
@@ -50,16 +52,10 @@
         };
 
         window.downloadPDF = function() {
-            const { jsPDF } = window.jspdf;
+            const { jsPDF } = jspdf;
             const doc = new jsPDF();
             doc.text("Resultados del Examen", 10, 10);
-            let rows = [];
-            document.querySelectorAll("#results-table tr").forEach((row, index) => {
-                let rowData = [];
-                row.querySelectorAll("td, th").forEach((cell) => rowData.push(cell.innerText));
-                rows.push(rowData);
-            });
-            doc.autoTable({ head: [rows[0]], body: rows.slice(1) });
+            doc.autoTable({ html: "#results-table" });
             doc.save("resultados_examen.pdf");
         };
     </script>
